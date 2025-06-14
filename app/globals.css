@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* KaTeX math formula styles */
+.katex {
+  font-size: 1.1em !important;
+}
+
+.katex-display {
+  margin: 1em 0 !important;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.5em 0;
+}
+
+.katex-display > .katex {
+  display: inline-block;
+  text-align: center;
+  max-width: 100%;
+}
+
+.katex-display > .katex > .katex-html {
+  display: block;
+  position: relative;
+  overflow-x: auto;
+  overflow-y: hidden;
+  text-align: center;
+}
+
+/* Improve spacing around inline math */
+.katex-inline {
+  padding: 0 0.2em;
+}
+
+/* Improve readability of fractions */
+.katex .mfrac {
+  margin: 0 0.2em;
+}
+
+/* Improve matrix display */
+.katex .mtable {
+  margin: 0.5em auto;
+}
+
+/* Improve equation alignment */
+.katex .mord {
+  margin: 0 0.1em;
+}
+
+/* Improve spacing in equations */
+.katex .mbin,
+.katex .mrel {
+  margin: 0 0.2em;
+}
+
+/* Ensure proper line height for inline math */
+.katex-inline {
+  line-height: 1.2;
+}
+
+/* Improve display math alignment */
+.katex-display {
+  text-align: center;
+}
+
+/* Add some padding around math blocks */
+.katex-display {
+  padding: 0.5em 0;
+}
+
+/* Ensure proper overflow handling */
+.katex-html {
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+} 
