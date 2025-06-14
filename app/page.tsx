@@ -19,6 +19,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [isKaTeXReady, setIsKaTeXReady] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [subject, setSubject] = useState<'math' | 'physics' | 'chemistry' | 'biology' | 'history' | 'geography' | 'natural_science'>('math');
 
   // Check if KaTeX is ready
   useEffect(() => {
@@ -99,6 +100,7 @@ export default function Home() {
     try {
       const formData = new FormData();
       formData.append('image', image);
+      formData.append('subject', subject);
 
       const response = await fetch('/api/solve', {
         method: 'POST',
@@ -146,6 +148,22 @@ export default function Home() {
         <h1 className="text-3xl font-bold mb-8 text-center">AI Exercise Solver</h1>
         
         <div className="space-y-6">
+          <div className="flex justify-center mb-4">
+            <select
+              value={subject}
+              onChange={(e) => setSubject(e.target.value as 'math' | 'physics' | 'chemistry' | 'biology' | 'history' | 'geography' | 'natural_science')}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="math">Toán học</option>
+              <option value="physics">Vật lý</option>
+              <option value="chemistry">Hóa học</option>
+              <option value="biology">Sinh học</option>
+              <option value="natural_science">Khoa học tự nhiên</option>
+              <option value="history">Lịch sử</option>
+              <option value="geography">Địa lý</option>
+            </select>
+          </div>
+
           <div
             {...getRootProps()}
             className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors

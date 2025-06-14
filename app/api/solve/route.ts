@@ -36,6 +36,7 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const image = formData.get('image') as File;
+    const subject = formData.get('subject') as 'math' | 'physics' | 'chemistry' | 'biology' | 'history' | 'geography' | 'natural_science';
     
     if (!image) {
       console.error('No image provided in request');
@@ -45,11 +46,97 @@ export async function POST(request: Request) {
       );
     }
 
+    // Get subject-specific prompt
+    const getSubjectPrompt = (subject: string) => {
+      const basePrompt = `Hãy giải bài tập này bằng tiếng Việt. Trình bày lời giải theo các bước rõ ràng và hiển thị tất cả các phép tính.
+      
+      Yêu cầu:
+      1. Sử dụng tiếng Việt để giải thích
+      2. Trình bày từng bước giải một cách chi tiết
+      3. Hiển thị đầy đủ các phép tính
+      4. Sử dụng định dạng markdown cho các tiêu đề
+      5. Sử dụng LaTeX cho tất cả các công thức:
+         - Công thức inline: sử dụng $...$
+         - Công thức riêng dòng: sử dụng $$...$$
+         - Ví dụ: $E = mc^2$ hoặc $$\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$$
+      6. Đảm bảo các công thức được viết đúng cú pháp LaTeX`;
+
+      const subjectSpecificPrompts = {
+        math: `${basePrompt}
+        7. Nếu có ma trận, sử dụng môi trường matrix trong LaTeX
+        8. Nếu có hệ phương trình, sử dụng môi trường cases trong LaTeX`,
+        physics: `${basePrompt}
+        7. Sử dụng các ký hiệu vật lý chuẩn (ví dụ: $F = ma$, $E = mc^2$)
+        8. Nếu có vector, sử dụng ký hiệu vector trong LaTeX (\\vec{v})
+        9. Nếu có đơn vị đo, ghi rõ đơn vị sau mỗi kết quả
+        10. Nếu có đồ thị, mô tả chi tiết cách vẽ và giải thích ý nghĩa`,
+        chemistry: `${basePrompt}
+        7. Sử dụng ký hiệu hóa học chuẩn (ví dụ: $H_2O$, $CO_2$)
+        8. Nếu có phương trình hóa học, sử dụng môi trường chemfig hoặc align
+        9. Nếu có cấu trúc phân tử, mô tả chi tiết cấu trúc
+        10. Nếu có phản ứng hóa học, cân bằng phương trình và giải thích từng bước`,
+        biology: `Hãy giải bài tập này bằng tiếng Việt. Trình bày lời giải theo các bước rõ ràng.
+        
+        Yêu cầu:
+        1. Sử dụng tiếng Việt để giải thích
+        2. Trình bày từng bước giải một cách chi tiết
+        3. Sử dụng định dạng markdown cho các tiêu đề
+        4. Nếu có thuật ngữ sinh học, giải thích rõ ràng
+        5. Nếu có quá trình sinh học, mô tả chi tiết từng giai đoạn
+        6. Nếu có cấu trúc sinh học, mô tả chi tiết cấu trúc và chức năng
+        7. Nếu có sơ đồ, giải thích ý nghĩa của từng phần
+        8. Nếu có bảng số liệu, phân tích và giải thích kết quả`,
+        history: `Hãy giải bài tập này bằng tiếng Việt. Trình bày lời giải theo các bước rõ ràng.
+        
+        Yêu cầu:
+        1. Sử dụng tiếng Việt để giải thích
+        2. Trình bày từng bước giải một cách chi tiết
+        3. Sử dụng định dạng markdown cho các tiêu đề
+        4. Nếu có sự kiện lịch sử, nêu rõ thời gian và địa điểm
+        5. Nếu có nhân vật lịch sử, nêu rõ vai trò và đóng góp
+        6. Nếu có nguyên nhân - kết quả, phân tích mối quan hệ
+        7. Nếu có bản đồ, giải thích ý nghĩa lịch sử
+        8. Nếu có tài liệu lịch sử, phân tích nội dung và giá trị`,
+        geography: `Hãy giải bài tập này bằng tiếng Việt. Trình bày lời giải theo các bước rõ ràng.
+        
+        Yêu cầu:
+        1. Sử dụng tiếng Việt để giải thích
+        2. Trình bày từng bước giải một cách chi tiết
+        3. Sử dụng định dạng markdown cho các tiêu đề
+        4. Nếu có vị trí địa lý, nêu rõ tọa độ và ranh giới
+        5. Nếu có đặc điểm tự nhiên, mô tả chi tiết
+        6. Nếu có bản đồ, giải thích các yếu tố địa lý
+        7. Nếu có biểu đồ, phân tích và giải thích số liệu
+        8. Nếu có mối quan hệ địa lý, phân tích tác động qua lại`,
+        natural_science: `Hãy giải bài tập này bằng tiếng Việt. Trình bày lời giải theo các bước rõ ràng.
+        
+        Yêu cầu:
+        1. Sử dụng tiếng Việt để giải thích
+        2. Trình bày từng bước giải một cách chi tiết
+        3. Sử dụng định dạng markdown cho các tiêu đề
+        4. Phân tích và xác định các kiến thức liên quan từ:
+           - Vật lý: các định luật, nguyên lý, công thức
+           - Hóa học: phản ứng, cấu trúc, tính chất
+           - Sinh học: quá trình, cấu trúc, chức năng
+        5. Nếu có công thức, sử dụng LaTeX:
+           - Công thức inline: $...$
+           - Công thức riêng dòng: $$...$$
+        6. Nếu có sơ đồ hoặc biểu đồ, giải thích ý nghĩa
+        7. Nếu có bảng số liệu, phân tích và giải thích
+        8. Nếu có thí nghiệm, mô tả quy trình và kết quả
+        9. Nếu có hiện tượng tự nhiên, giải thích nguyên nhân và cơ chế
+        10. Nếu có ứng dụng thực tế, liên hệ với đời sống`
+      };
+
+      return subjectSpecificPrompts[subject as keyof typeof subjectSpecificPrompts] || basePrompt;
+    };
+
     // Log image details
     console.log('Image details:', {
       type: image.type,
       size: image.size,
-      name: image.name
+      name: image.name,
+      subject
     });
 
     // Convert image to base64
@@ -78,20 +165,7 @@ export async function POST(request: Request) {
                 mimeType: image.type,
               },
             },
-            `Hãy giải bài tập này bằng tiếng Việt. Trình bày lời giải theo các bước rõ ràng và hiển thị tất cả các phép tính.
-            
-            Yêu cầu:
-            1. Sử dụng tiếng Việt để giải thích
-            2. Trình bày từng bước giải một cách chi tiết
-            3. Hiển thị đầy đủ các phép tính
-            4. Sử dụng định dạng markdown cho các tiêu đề
-            5. Sử dụng LaTeX cho tất cả các công thức toán học:
-               - Công thức inline: sử dụng $...$
-               - Công thức riêng dòng: sử dụng $$...$$
-               - Ví dụ: $E = mc^2$ hoặc $$\\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$$
-            6. Đảm bảo các công thức toán học được viết đúng cú pháp LaTeX
-            7. Nếu có ma trận, sử dụng môi trường matrix trong LaTeX
-            8. Nếu có hệ phương trình, sử dụng môi trường cases trong LaTeX`,
+            getSubjectPrompt(subject)
           ]);
 
           console.log(`Successfully used model: ${modelName}`);
